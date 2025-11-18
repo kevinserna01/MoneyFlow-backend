@@ -5,6 +5,8 @@ import './config/firebase.js'; // Inicializar Firebase
 
 // Importar rutas
 import usuariosRoutes from './routes/usuarios.routes.js';
+import categoriasRoutes from './routes/categorias.routes.js';
+import transaccionesRoutes from './routes/transacciones.routes.js';
 
 const app = express();
 const PORT = 4000;
@@ -16,6 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/categorias', categoriasRoutes);
+app.use('/api/transacciones', transaccionesRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

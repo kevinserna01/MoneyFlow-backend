@@ -239,6 +239,106 @@ export class UsuariosController {
     }
   }
 
+  // GET /api/usuarios/:id/contrasena-actual
+  static async getContraseñaActual(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Obtener el usuario
+      const usuario = await UsuarioModel.findById(id);
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          error: 'Usuario no encontrado'
+        });
+      }
+
+      // Retornar la contraseña hasheada (sin deshashear, ya que es imposible)
+      // El frontend mostrará asteriscos o un campo deshabilitado
+      res.status(200).json({
+        success: true,
+        data: {
+          tieneContraseña: !!usuario.contraseña,
+          // No enviamos la contraseña real por seguridad, solo indicamos que existe
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
+  // PUT /api/usuarios/:id/cambiar-contrasena
+  static async cambiarContraseña(req, res) {
+    try {
+      const { id } = req.params;
+      const { nuevaContraseña, confirmarContraseña } = req.body;
+
+      // Validar campos requeridos
+      if (!nuevaContraseña || !confirmarContraseña) {
+        return res.status(400).json({
+          success: false,
+          error: 'Los campos nuevaContraseña y confirmarContraseña son requeridos'
+        });
+      }
+
+      // Validar que la nueva contraseña y la confirmación coincidan
+      if (nuevaContraseña !== confirmarContraseña) {
+        return res.status(400).json({
+          success: false,
+          error: 'La nueva contraseña y la confirmación no coinciden'
+        });
+      }
+
+      // Validar longitud mínima de la nueva contraseña
+      if (nuevaContraseña.length < 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'La nueva contraseña debe tener al menos 6 caracteres'
+        });
+      }
+
+      // Obtener el usuario
+      const usuario = await UsuarioModel.findById(id);
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          error: 'Usuario no encontrado'
+        });
+      }
+
+      // Verificar que la nueva contraseña sea diferente a la actual
+      const mismaContraseña = UsuariosController.verifyPassword(nuevaContraseña, usuario.contraseña);
+      if (mismaContraseña) {
+        return res.status(400).json({
+          success: false,
+          error: 'La nueva contraseña debe ser diferente a la contraseña actual'
+        });
+      }
+
+      // Hashear la nueva contraseña
+      const nuevaContraseñaHash = UsuariosController.hashPassword(nuevaContraseña);
+
+      // Actualizar la contraseña
+      const usuarioActualizado = await UsuarioModel.update(id, {
+        contraseña: nuevaContraseñaHash
+      });
+
+      res.status(200).json({
+        success: true,
+        data: UsuariosController.removePassword(usuarioActualizado),
+        message: 'Contraseña actualizada correctamente'
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
   // POST /api/usuarios/login
   static async login(req, res) {
     try {
