@@ -1,7 +1,7 @@
-import 'dotenv/config'; // Cargar variables de entorno
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import './config/firebase.js'; // Inicializar Firebase
+import './config/firebase.js';
 
 // Importar rutas
 import usuariosRoutes from './routes/usuarios.routes.js';
@@ -9,7 +9,6 @@ import categoriasRoutes from './routes/categorias.routes.js';
 import transaccionesRoutes from './routes/transacciones.routes.js';
 
 const app = express();
-const PORT = 4000;
 
 // Middlewares
 app.use(cors());
@@ -25,8 +24,7 @@ app.use('/api/transacciones', transaccionesRoutes);
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Backend MoneyFlow API',
-    status: 'running',
-    port: PORT
+    status: 'running'
   });
 });
 
@@ -39,9 +37,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📡 API disponible en http://localhost:${PORT}/api`);
-});
+// Exportar para Vercel (serverless)
+export default app;
 
+// Para desarrollo local, mantener el listen
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`📡 API disponible en http://localhost:${PORT}/api`);
+  });
+}
